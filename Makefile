@@ -1,0 +1,22 @@
+all: lint test build
+
+.PHONY: lint
+lint:
+	cargo clippy --all-features -- --deny warnings
+
+.PHONY: lint-fix
+lint-fix:
+	cargo clippy --all-features --fix
+
+.PHONY: test
+test:
+	cargo tarpaulin --release --run-types AllTargets --out lcov --out stdout \
+		--exclude-files src/c_varint.rs
+
+.PHONY: clean
+clean:
+	cargo clean
+
+.PHONY: build
+build:
+	cargo build --release

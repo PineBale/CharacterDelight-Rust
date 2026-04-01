@@ -1,0 +1,11 @@
+[package]
+name = "character_delight"
+version = "0.1.0"
+authors = ["PineBale"]
+edition = "2021"
+rust-version = "1.89.0"
+readme = "README.md"
+license-file = "LICENSE"
+publish = false
+
+[dependencies]
