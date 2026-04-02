@@ -1,22 +1,36 @@
-all: lint test build
+CARGO ?= cargo
+PROFILE ?= release
+FEATURES ?= --all-features
 
-.PHONY: lint
-lint:
-	cargo clippy --all-features -- --deny warnings
+CLIPPY_PROFILE ?= dev
+TEST_PROFILE ?= dev
 
-.PHONY: lint-fix
-lint-fix:
-	cargo clippy --all-features --fix
+CLIPPY_FLAGS = $(FEATURES) --all-targets -- -D warnings
+TARPAULIN_FLAGS = --run-types AllTargets --out lcov --out stdout
 
-.PHONY: test
-test:
-	cargo tarpaulin --release --run-types AllTargets --out lcov --out stdout \
-		--exclude-files src/c_varint.rs
+.PHONY: all build test lint lint-fix fmt fmt-check clean ci help
 
-.PHONY: clean
-clean:
-	cargo clean
+all: fmt-check lint test build
 
-.PHONY: build
 build:
-	cargo build --release
+	$(CARGO) build --profile $(PROFILE) $(FEATURES)
+
+test:
+	$(CARGO) tarpaulin --profile $(TEST_PROFILE) $(FEATURES) $(TARPAULIN_FLAGS)
+
+lint:
+	$(CARGO) clippy --profile $(CLIPPY_PROFILE) $(CLIPPY_FLAGS)
+
+lint-fix:
+	$(CARGO) clippy --profile $(CLIPPY_PROFILE) $(FEATURES) --fix --allow-dirty --allow-staged
+
+fmt:
+	$(CARGO) fmt
+
+fmt-check:
+	$(CARGO) fmt -- --check
+
+clean:
+	$(CARGO) clean
+
+ci: fmt-check lint test build

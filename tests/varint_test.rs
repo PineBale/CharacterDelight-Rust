@@ -24,7 +24,7 @@ fn test_decode_varint0(t: Vec<u8>, r: i32) {
 
 #[test]
 fn test_decode_varint() {
-    assert!(decode_varint(&vec![0, 0, 0, 0, 0, 0]).is_err());
+    assert!(decode_varint(&[0, 0, 0, 0, 0, 0]).is_err());
     test_decode_varint0(vec![0], 0);
     test_decode_varint0(vec![1], 1);
     test_decode_varint0(vec![2], 2);
