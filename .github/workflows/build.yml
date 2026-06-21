@@ -106,6 +106,10 @@ jobs:
           override: true
 
       - run: cargo test --profile release --target ${{ matrix.target }} --all-features
+        if: ${{ matrix.target != 'wasm32-unknown-unknown' }}
+
+      - run: cargo build --profile release --target ${{ matrix.target }} --all-features
+        if: ${{ matrix.target == 'wasm32-unknown-unknown' }}
 
       - run: ls -alh ./target/release
 
