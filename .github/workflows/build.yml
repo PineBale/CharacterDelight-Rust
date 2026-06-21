@@ -9,6 +9,7 @@ on:
       - "tests/*.rs"
       - "Cargo.toml"
       - "Cargo.lock"
+      - "Makefile"
       - "!.gitignore"
       - "!LICENSE"
       - "!README.md"
@@ -20,6 +21,7 @@ on:
       - "tests/*.rs"
       - "Cargo.toml"
       - "Cargo.lock"
+      - "Makefile"
       - "!.gitignore"
       - "!LICENSE"
       - "!README.md"
@@ -36,8 +38,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [
-          ubuntu-24.04, ubuntu-22.04,
-          ubuntu-24.04-arm, ubuntu-22.04-arm,
+          ubuntu-26.04, ubuntu-24.04, ubuntu-22.04,
+          ubuntu-26.04-arm, ubuntu-24.04-arm, ubuntu-22.04-arm,
           windows-latest,
           macos-26, macos-15, macos-14
         ]
@@ -46,13 +48,71 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - run: cargo install cargo-tarpaulin
 
-      - run: make test
+      - run: make ci
 
-      - uses: livewing/lcov-job-summary@v1.2.0
+      - uses: livewing/lcov-job-summary@v1.3.0
         with:
           lcov: ./lcov.info
-        continue-on-error: true
+
+
+  targets:
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: wasm32-unknown-unknown
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+          - os: ubuntu-26.04-arm
+            target: aarch64-unknown-linux-gnu
+          - os: ubuntu-26.04-arm
+            target: aarch64-unknown-linux-musl
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: windows-latest
+            target: x86_64-pc-windows-gnullvm
+          - os: windows-latest
+            target: x86_64-pc-windows-gnu
+          - os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+          - os: windows-11-arm
+            target: aarch64-pc-windows-gnullvm
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: macos-26-intel
+            target: x86_64-apple-darwin
+
+    name: Compilation on ${{ matrix.os }} for ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          cache: false
+          override: true
+
+      - run: cargo test --profile release --target ${{ matrix.target }} --all-features
+
+      - run: ls -alh ./target/release
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ github.run_id }}-${{ matrix.os }}-${{ matrix.target }}
+          path: |
+            ./target
+          retention-days: 1
+          overwrite: true
